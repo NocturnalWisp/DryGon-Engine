@@ -1,0 +1,8 @@
+[package]
+name = "dry_gon"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+raylib = { version = "3.7" }
+drython = { path = "Drython-Parser" }
