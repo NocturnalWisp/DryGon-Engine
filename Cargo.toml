@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 raylib = { version = "3.7" }
-drython = { path = "Drython-Parser" }
+drython = { git = "https://github.com/NocturnalWisp/Drython-Parser.git" }
 yaml-rust = "0.4"
