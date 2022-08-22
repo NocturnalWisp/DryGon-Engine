@@ -7,7 +7,7 @@ use super::object::Object;
 use drython::types::{Parser, error::ErrorManager};
 use yaml_rust::{YamlLoader, Yaml};
 
-use raylib::{prelude::Vector2, RaylibHandle, RaylibThread};
+use raylib::prelude::Vector2;
 
 pub struct SceneManager<'a>
 {
