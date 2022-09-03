@@ -76,7 +76,7 @@ impl<'a> SceneManager<'a>
 
     fn initialize_scene(&mut self, raylib: &mut Raylib, scene: &mut Scene, unloaded: &Yaml)
     {
-        if let Yaml::Hash(hash) = &unloaded["objects2d"]
+        if let Yaml::Hash(hash) = &unloaded["2D Objects"]
         {
             for object in hash
             {

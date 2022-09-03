@@ -1,31 +1,12 @@
+#[path="transform2d.rs"]
+mod transform2d;
+pub use transform2d::Transform2D;
 
-use raylib::{prelude::Vector2, prelude::{Vector3, Quaternion}};
+#[path="transform3d.rs"]
+mod transform3d;
+pub use transform3d::Transform3D;
 
 pub trait Transform
 {
     
-}
-
-pub struct Transform2D
-{
-    pub pos: Vector2,
-    pub rot: f32,
-    pub scale: Vector2
-}
-
-impl Transform for Transform2D
-{
-
-}
-
-pub struct Transform3D
-{
-    pub pos: Vector3,
-    pub rot: Quaternion,
-    pub scale: Vector3
-}
-
-impl Transform for Transform3D
-{
-
 }
