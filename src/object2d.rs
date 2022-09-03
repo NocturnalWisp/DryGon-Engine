@@ -1,3 +1,4 @@
+use drython::types::error::ErrorManager;
 use raylib::math::Vector2;
 use crate::transform::Transform2D;
 use raylib::texture::Texture2D;
@@ -25,6 +26,7 @@ impl<'a> Object2D<'a>
 
                 script_path: String::new(),
                 script: None,
+                script_errors: ErrorManager::new(),
             },
             sprite: None,
             transform: Transform2D

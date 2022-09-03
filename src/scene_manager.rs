@@ -4,7 +4,7 @@ use std::fs;
 use crate::object::Object2D;
 
 use super::object::Object;
-use drython::types::{Parser, error::ErrorManager};
+use drython::types::{Parser, Runner};
 use yaml_rust::{YamlLoader, Yaml};
 
 use raylib::prelude::Vector2;
@@ -94,6 +94,7 @@ impl<'a> SceneManager<'a>
                                 "sprite" => SceneManager::handle_sprite(&mut new_obj, raylib, param.1),
                                 "pos" => { new_obj.transform.pos =
                                     Vector2::new(param.1["x"].as_f64().unwrap_or(0.0) as f32, param.1["y"].as_f64().unwrap_or(0.0) as f32); },
+                                "script" => SceneManager::handle_script(&mut new_obj.object, param.1),
                                 _ => ()
                             }
                         }
@@ -109,7 +110,8 @@ impl<'a> SceneManager<'a>
     {
         if let Some(file_name) = object1.as_str()
         {
-            match raylib.0.load_texture(&raylib.1, file_name)
+            let asset_location: &str = &format!("assets/{}", file_name);
+            match raylib.0.load_texture(&raylib.1, asset_location)
             {
                 Ok(image) => { new_obj.sprite = Some(image); }
                 Err(error) => println!("Failed to load image {} due to {}.", file_name, error)
@@ -118,23 +120,38 @@ impl<'a> SceneManager<'a>
         else { println!("Invalid sprite file {:?}.", object1); }
     }
 
-    fn handle_script(new_obj: &mut Object, object1: &Yaml)
+    fn handle_script(new_obj: &mut Object, script_path: &Yaml)
     {
-        if let Some(file_name) = object1.as_str()
+        if let Some(file_name) = script_path.as_str()
         {
-            match Parser::parse_file(file_name, &mut ErrorManager::new())
+            if let Ok(canon) = std::fs::canonicalize(format!("assets/{}", file_name))
             {
-                Ok(parser) => { new_obj.script_path = file_name.to_string(); new_obj.script = Some(parser); }
-                Err(error) => println!("Failed to load image {} due to {}.", file_name, error)
+                if let Some(full_path) = canon.to_str()
+                {
+                    match Parser::parse_file(full_path, &mut new_obj.script_errors)
+                    {
+                        Ok(parser) => { new_obj.script_path = file_name.to_string(); new_obj.script = Some(Runner::new(parser));
+                        }
+                        Err(error) => println!("Failed to load script {} due to {}.", file_name, error)
+                    }
+                }
+                else
+                {
+                    println!("Failed to load script from {:?}. Path contains non-unicode characters.", canon);
+                }
+            }
+            else
+            {
+                println!("Failed to load script from {:?}. Path is not local to asset folder.", file_name);
             }
         }
-        else { println!("Invalid sprite file {:?}.", object1); }
+        else { println!("Invalid sprite file {:?}.", script_path); }
     }
 }
 
 pub struct Scene<'a>
 {
-    scene_path: String,
+    pub scene_path: String,
     loaded_scene: Yaml,
     pub objects2d: Vec<Object2D<'a>>
 }

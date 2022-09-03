@@ -6,7 +6,8 @@ pub use object2d::Object2D;
 mod object3d;
 pub use object3d::Object3D;
 
-use drython::types::Parser;
+use drython::types::error::ErrorManager;
+use drython::types::Runner;
 use crate::transform::Transform;
 
 pub struct Object<'a>
@@ -16,5 +17,6 @@ pub struct Object<'a>
     pub children: Option<Vec<&'a mut dyn Transform>>,
 
     pub script_path: String,
-    pub script: Option<Parser>
+    pub script: Option<Runner>,
+    pub script_errors: ErrorManager
 }
