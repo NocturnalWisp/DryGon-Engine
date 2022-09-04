@@ -1,10 +1,12 @@
+use std::rc::Rc;
+use std::cell::RefCell;
 use crate::Raylib;
 use std::fs;
 
 use crate::object::Object2D;
 
 use super::object::Object;
-use drython::types::{Parser, Runner};
+use drython::types::{Parser, Runner, Token};
 use yaml_rust::{YamlLoader, Yaml};
 
 use raylib::prelude::Vector2;
@@ -99,6 +101,17 @@ impl<'a> SceneManager<'a>
                             }
                         }
                     }
+
+                    if let Some(runner) = &mut new_obj.object.script
+                    {
+                        let pos = Token::Collection(vec![Token::Float(new_obj.transform.pos.x), Token::Float(new_obj.transform.pos.y)]);
+                        runner.register_variable(Rc::new(RefCell::new(new_obj)), "object.pos".to_string(), pos,
+                            Box::new(|obj, name, result| 
+                                     {
+                                         obj.borrow_mut().transform.pos = Vector2.zero;
+                                     })
+                        );
+                    }
                 }
 
                 scene.objects2d.push(new_obj);
@@ -130,7 +143,11 @@ impl<'a> SceneManager<'a>
                 {
                     match Parser::parse_file(full_path, &mut new_obj.script_errors)
                     {
-                        Ok(parser) => { new_obj.script_path = file_name.to_string(); new_obj.script = Some(Runner::new(parser));
+                        Ok(parser) => 
+                        {
+                            new_obj.script_path = file_name.to_string();
+                            let runner = Runner::new(parser);
+                            new_obj.script = Some(runner);
                         }
                         Err(error) => println!("Failed to load script {} due to {}.", file_name, error)
                     }

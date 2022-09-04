@@ -1,4 +1,4 @@
-use drython::types::error::ErrorManager;
+use drython::types::{error::ErrorManager, VariableReference};
 use raylib::math::Vector2;
 use crate::transform::Transform2D;
 use raylib::texture::Texture2D;
@@ -38,3 +38,5 @@ impl<'a> Object2D<'a>
         }
     }
 }
+
+impl<'a> VariableReference for Object2D<'a> {}

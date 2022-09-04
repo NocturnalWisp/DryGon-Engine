@@ -7,7 +7,7 @@ mod object3d;
 pub use object3d::Object3D;
 
 use drython::types::error::ErrorManager;
-use drython::types::Runner;
+use drython::types::{Runner, VariableReference};
 use crate::transform::Transform;
 
 pub struct Object<'a>
@@ -19,4 +19,9 @@ pub struct Object<'a>
     pub script_path: String,
     pub script: Option<Runner>,
     pub script_errors: ErrorManager
+}
+
+impl<'a> VariableReference for Object<'a>
+{
+
 }
