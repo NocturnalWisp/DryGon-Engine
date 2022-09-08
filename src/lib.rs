@@ -1,9 +1,14 @@
+#[macro_use]
+extern crate downcast_rs;
+
 pub mod scene_manager;
 pub mod object;
 pub mod transform;
 
+mod drython_extensions;
+
+use crate::object::Object2D;
 use drython::types::Token;
-use drython::types::error::ErrorManager;
 use raylib::RaylibHandle;
 use raylib::RaylibThread;
 use std::fs;
@@ -17,18 +22,18 @@ extern crate yaml_rust;
 use scene_manager::SceneManager;
 use yaml_rust::{YamlLoader, Yaml};
 
-pub struct Game<'a>
+pub struct Game
 {
     name: String,
     main_scene_path: String,
-    scene_manager: SceneManager<'a>,
+    scene_manager: SceneManager,
 }
 
 type Raylib<'a> = (&'a mut RaylibHandle, &'a RaylibThread);
 
-impl<'a> Game<'a>
+impl Game
 {
-    pub fn new(main_yaml_path: &str) -> Game<'a>
+    pub fn new(main_yaml_path: &str) -> Game
     {
         Game
         {
@@ -67,19 +72,11 @@ impl<'a> Game<'a>
             }
         }
 
-        let mut error_manager = ErrorManager::new();
-
         if let Some(current_scene) = &mut self.scene_manager.current_scene
         {
-            for object in &mut current_scene.objects2d
-            {
-                if let Some(runner) = &mut object.object.script
-                {
-                    runner.run_setup(&mut error_manager);
-                    runner.call_function("start", vec![], &mut error_manager);
-                    // println!("{:#?}", error_manager.errors.iter().map(|x| x.display()).collect::<Vec<String>>());
-                }
-            }
+            current_scene.script_manager.run_setup();
+            current_scene.script_manager.run_function_all("start", None);
+            current_scene.script_manager.update_variables(&mut current_scene.objects);
         }
 
         // Game Loop
@@ -102,14 +99,8 @@ impl<'a> Game<'a>
             {
                 if let Some(current_scene) = &mut self.scene_manager.current_scene
                 {
-                    for object in &mut current_scene.objects2d
-                    {
-                        if let Some(runner) = &mut object.object.script
-                        {
-                            runner.call_function("update", vec![Token::Float(game_delta_time)], &mut error_manager);
-                        }
-
-                    }
+                    current_scene.script_manager.run_function_all("update", Some(vec![Token::Float(game_delta_time)]));
+                    current_scene.script_manager.update_variables(&mut current_scene.objects);
                 }
                 accumulator -= target_frame_time;
             }
@@ -121,14 +112,16 @@ impl<'a> Game<'a>
             // 2d object drawing.
             if let Some(current_scene) = &self.scene_manager.current_scene
             {
-                for object in &current_scene.objects2d
+                for object in &current_scene.objects
                 {
-                    if let Some(texture) = &object.sprite
+                    if let Some(object2d) = object.downcast_ref::<Object2D>()
                     {
-                        let pos = object.transform.pos;
-                        d.draw_texture(texture, pos.x as i32, pos.y as i32, raylib::color::Color::WHITE); 
+                        if let Some(texture) = &object2d.sprite
+                        {
+                            let pos = object2d.transform.pos;
+                            d.draw_texture(texture, pos.x as i32, pos.y as i32, raylib::color::Color::WHITE); 
+                        }
                     }
-
                 }
             }
         }
@@ -144,7 +137,7 @@ impl<'a> Game<'a>
 
         if let Yaml::String(main_scene) = &contents[0]["main_scene"]
         {
-            self.main_scene_path = main_scene.to_string();
+            self.main_scene_path = format!("assets/{}", main_scene);
             self.scene_manager.load(raylib, &self.main_scene_path);
         }
     }

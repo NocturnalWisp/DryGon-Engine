@@ -1,24 +1,24 @@
-use std::rc::Rc;
-use std::cell::RefCell;
+use crate::object::TObject;
+#[path="scene.rs"]
+mod scene;
+
+use yaml_rust::Yaml;
+use yaml_rust::YamlLoader;
 use crate::Raylib;
 use std::fs;
 
+use scene::Scene;
 use crate::object::Object2D;
-
-use super::object::Object;
-use drython::types::{Parser, Runner, Token};
-use yaml_rust::{YamlLoader, Yaml};
-
 use raylib::prelude::Vector2;
 
-pub struct SceneManager<'a>
+pub struct SceneManager
 {
-    pub current_scene: Option<Scene<'a>>
+    pub current_scene: Option<Scene>
 }
 
-impl<'a> SceneManager<'a>
+impl SceneManager
 {
-    pub fn new() -> SceneManager<'a>
+    pub fn new() -> SceneManager
     {
         SceneManager
         {
@@ -33,12 +33,7 @@ impl<'a> SceneManager<'a>
             scene.unload();
         }
 
-        let mut new_scene = Scene
-        {
-            scene_path: scene_path.to_string(),
-            loaded_scene: Yaml::BadValue,
-            objects2d: vec![]
-        };
+        let mut new_scene = Scene::new(scene_path.to_string());
 
         match fs::read_to_string(scene_path)
         {
@@ -96,26 +91,19 @@ impl<'a> SceneManager<'a>
                                 "sprite" => SceneManager::handle_sprite(&mut new_obj, raylib, param.1),
                                 "pos" => { new_obj.transform.pos =
                                     Vector2::new(param.1["x"].as_f64().unwrap_or(0.0) as f32, param.1["y"].as_f64().unwrap_or(0.0) as f32); },
-                                "script" => SceneManager::handle_script(&mut new_obj.object, param.1),
+                                "script" => scene.script_manager.handle_script(&new_obj.object, param.1),
                                 _ => ()
                             }
                         }
                     }
 
-                    if let Some(runner) = &mut new_obj.object.script
-                    {
-                        let pos = Token::Collection(vec![Token::Float(new_obj.transform.pos.x), Token::Float(new_obj.transform.pos.y)]);
-                        runner.register_variable(Rc::new(RefCell::new(new_obj)), "object.pos".to_string(), pos,
-                            Box::new(|obj, name, result| 
-                                     {
-                                         obj.borrow_mut().transform.pos = Vector2.zero;
-                                     })
-                        );
-                    }
                 }
 
-                scene.objects2d.push(new_obj);
+                scene.objects.push(Box::new(new_obj));
             }
+
+            // Register any script vars.
+            scene.script_manager.register_variables(&mut scene.objects);
         }
     }
 
@@ -133,50 +121,4 @@ impl<'a> SceneManager<'a>
         else { println!("Invalid sprite file {:?}.", object1); }
     }
 
-    fn handle_script(new_obj: &mut Object, script_path: &Yaml)
-    {
-        if let Some(file_name) = script_path.as_str()
-        {
-            if let Ok(canon) = std::fs::canonicalize(format!("assets/{}", file_name))
-            {
-                if let Some(full_path) = canon.to_str()
-                {
-                    match Parser::parse_file(full_path, &mut new_obj.script_errors)
-                    {
-                        Ok(parser) => 
-                        {
-                            new_obj.script_path = file_name.to_string();
-                            let runner = Runner::new(parser);
-                            new_obj.script = Some(runner);
-                        }
-                        Err(error) => println!("Failed to load script {} due to {}.", file_name, error)
-                    }
-                }
-                else
-                {
-                    println!("Failed to load script from {:?}. Path contains non-unicode characters.", canon);
-                }
-            }
-            else
-            {
-                println!("Failed to load script from {:?}. Path is not local to asset folder.", file_name);
-            }
-        }
-        else { println!("Invalid sprite file {:?}.", script_path); }
-    }
-}
-
-pub struct Scene<'a>
-{
-    pub scene_path: String,
-    loaded_scene: Yaml,
-    pub objects2d: Vec<Object2D<'a>>
-}
-
-impl<'a> Scene<'a>
-{
-    pub fn unload(&mut self)
-    {
-        
-    }
 }

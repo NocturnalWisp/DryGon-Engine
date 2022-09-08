@@ -7,3 +7,4 @@ edition = "2021"
 raylib = { version = "3.7" }
 drython = { git = "https://github.com/NocturnalWisp/Drython-Parser.git" }
 yaml-rust = "0.4"
+downcast-rs = "1.2.0"

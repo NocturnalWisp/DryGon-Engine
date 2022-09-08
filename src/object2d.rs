@@ -1,33 +1,25 @@
-use drython::types::{error::ErrorManager, VariableReference};
+use crate::{object::TObject, generate_get_name, generate_get_id};
+
 use raylib::math::Vector2;
 use crate::transform::Transform2D;
 use raylib::texture::Texture2D;
 use crate::object::Object;
 
-pub struct Object2D<'a>
+pub struct Object2D
 {
-    pub object: Object<'a>,
+    pub object: Object,
 
     pub sprite: Option<Texture2D>,
     pub transform: Transform2D,
 }
 
-impl<'a> Object2D<'a>
+impl TObject for Object2D
 {
-    pub fn new() -> Object2D<'a>
+    fn new() -> Self
     {
         Object2D
         {
-            object: Object
-            {
-                name: String::new(),
-                parent: None,
-                children: None,
-
-                script_path: String::new(),
-                script: None,
-                script_errors: ErrorManager::new(),
-            },
+            object: Object::new(),
             sprite: None,
             transform: Transform2D
             {
@@ -37,6 +29,7 @@ impl<'a> Object2D<'a>
             },
         }
     }
-}
 
-impl<'a> VariableReference for Object2D<'a> {}
+    generate_get_name!();
+    generate_get_id!();
+}
