@@ -47,7 +47,15 @@ impl ScriptManager
                     {
                         Ok(parser) => 
                         {
-                            self.scripts.insert(new_obj.get_id(), (full_path.to_string(), Runner::new(parser), error_manager));
+                            if error_manager.errors.len() == 0
+                            {
+                                self.scripts.insert(new_obj.get_id(), (full_path.to_string(), Runner::new(parser), error_manager));
+                            }
+                            else
+                            {
+                                println!("Script parsed with errors. Please fix them before your script becomes active:\n{:#?}",
+                                         error_manager.errors);
+                            }
                         }
                         Err(error) => println!("Failed to load script {} due to {}.", file_name, error)
                     }
@@ -104,9 +112,23 @@ impl ScriptManager
 
     pub fn run_function_all(&mut self, name: &str, args: Option<Vec<Token>>)
     {
+        let mut delete_me = None;
         for script in &mut self.scripts
         {
             script.1.1.call_function(name, args.clone().unwrap_or(vec![]), &mut script.1.2);
+
+            if script.1.2.errors.len() > 0
+            {
+                println!("{} failed to call {}, due to the following errors:\n{:#?}\nWarning: Script has been disabled.",
+                         script.1.0, name, script.1.2.errors);
+
+                delete_me = Some(*script.0);
+            }
+        }
+
+        if let Some(delete) = delete_me
+        {
+            self.scripts.remove(&delete);
         }
     }
 }

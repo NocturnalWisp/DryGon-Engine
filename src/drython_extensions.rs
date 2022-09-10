@@ -97,25 +97,46 @@ impl DrythonExRef for Transform2D
     }
 }
 
+// Macro for handling external functions to drython.
+macro_rules! create_external_function
+{
+    ($name: ident, $sub_downcast: tt, $sub_name: ident, $args: ident, $body: block) =>
+    {
+        
+        pub fn $name(optional_object: Option<*mut dyn ExFnRef>, $args: Vec<Token>) -> Result<Option<Token>, String>
+        {
+            if let Some(object_ref) = optional_object
+            {
+                unsafe
+                {
+                    if let Some($sub_name) = (*object_ref.as_mut().unwrap()).as_any_mut().downcast_mut::<Box<dyn TObject>>().unwrap().downcast_mut::<$sub_downcast>()
+                    {
+                        $body
+                    }
+                }
+            }
+            else
+            {
+                return Err("Could not track optional object.".to_string());
+            }
+
+            Ok(None)
+        }
+    };
+}
+
 impl Object
 {
     // The object can send of events when an input is registered.
-    pub fn register_input(s: Option<*mut dyn ExFnRef>, args: Vec<Token>) -> Result<Option<Token>, String>
+    create_external_function!(register_input, Object2D, object2d, args,
     {
-        if let Some(object_ref) = s
-        {
-            unsafe
-            {
-                if let Some(object2d) = (*object_ref.as_mut().unwrap()).as_any_mut().downcast_mut::<Box<dyn TObject>>().unwrap().downcast_mut::<Object2D>()
-                {
-                    println!("Pos: {:?}", object2d.object.name);
-                    object2d.object.name = "Bananas".to_string();
-                    println!("Pos2: {:?}", object2d.object.name);
-                }
-            }
-        }
+        object2d.transform.pos = Vector2::new(-50.0, 20.0);
+        println!("args1: {:?}", args[0]);
+    });
 
-        // self.inputs.push((device, button));
-        Err("Not implemented.".to_string())
+
+    pub fn get_parent()
+    {
+
     }
 }
