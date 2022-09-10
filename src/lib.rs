@@ -1,3 +1,7 @@
+#![feature(trait_upcasting)]
+#![feature(thread_local)]
+#![allow(incomplete_features)]
+
 #[macro_use]
 extern crate downcast_rs;
 
@@ -33,6 +37,7 @@ type Raylib<'a> = (&'a mut RaylibHandle, &'a RaylibThread);
 
 impl Game
 {
+
     pub fn new(main_yaml_path: &str) -> Game
     {
         Game
@@ -43,7 +48,7 @@ impl Game
         }
     }
 
-    pub fn start(&mut self)
+    pub fn start(&mut self) -> &mut Self
     {
         let (mut rl, thread) = raylib::init()
             .size(640, 480)
@@ -77,6 +82,14 @@ impl Game
             current_scene.script_manager.run_setup();
             current_scene.script_manager.run_function_all("start", None);
             current_scene.script_manager.update_variables(&mut current_scene.objects);
+
+            for object in &current_scene.objects
+            {
+                if let Some(object2d) = object.downcast_ref::<Object2D>()
+                {
+                    println!("After Change: {:?}", object2d.object.name);
+                }
+            }
         }
 
         // Game Loop
@@ -125,6 +138,8 @@ impl Game
                 }
             }
         }
+
+        self
     }
 
     fn startup_yaml(&mut self, raylib: &mut Raylib, contents: Vec<Yaml>)

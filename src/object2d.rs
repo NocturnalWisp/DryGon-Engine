@@ -32,4 +32,9 @@ impl TObject for Object2D
 
     generate_get_name!();
     generate_get_id!();
+
+    fn get_obj(&mut self) -> &mut Object
+    {
+        &mut self.object
+    }
 }

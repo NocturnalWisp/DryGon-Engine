@@ -65,18 +65,26 @@ impl ScriptManager
         else { println!("Invalid sprite file {:?}.", script_path); }
     }
 
-    pub fn register_variables<T>(&mut self, objects: &mut Vec<Box<T>>)
-        where
-            T: TObject,
-            T: ?Sized
+    pub fn register_externals(&mut self, objects: &mut Vec<Box<dyn TObject>>)
     {
-        for object in objects
+        for object in objects.iter_mut()
         {
             if self.scripts.contains_key(&object.get_id())
             {
+                // Variables
                 let obj_map = object.get_drython_vars();
-                self.scripts.entry(object.get_id()).and_modify(|x| { x.1.register_variables(obj_map); });
+
+                // Functions.
+                
+                self.scripts.entry(object.get_id())
+                    .and_modify(|x|
+                    {
+                        x.1.register_variables(obj_map);
+                        x.1.register_external_function("register_input", Some(object), Box::new(Object::register_input));
+                    }
+                );
             }
+
         }
     }
 

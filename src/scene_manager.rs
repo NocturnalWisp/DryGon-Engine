@@ -47,7 +47,7 @@ impl SceneManager
                         // values are not present.
                         if let Some(yaml_doc) = yaml.pop()
                         {
-                            self.initialize_scene(raylib, &mut new_scene, &yaml_doc);
+                            SceneManager::initialize_scene(raylib, &mut new_scene, &yaml_doc);
                             new_scene.loaded_scene = yaml_doc;
                         }
                         else
@@ -68,10 +68,9 @@ impl SceneManager
         }
 
         self.current_scene = Some(new_scene);
-        self.current_scene.as_mut().unwrap();
     }
 
-    fn initialize_scene(&mut self, raylib: &mut Raylib, scene: &mut Scene, unloaded: &Yaml)
+    fn initialize_scene(raylib: &mut Raylib, scene: &mut Scene, unloaded: &Yaml)
     {
         if let Yaml::Hash(hash) = &unloaded["objects 2d"]
         {
@@ -103,7 +102,7 @@ impl SceneManager
             }
 
             // Register any script vars.
-            scene.script_manager.register_variables(&mut scene.objects);
+            scene.script_manager.register_externals(&mut scene.objects);
         }
     }
 
