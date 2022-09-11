@@ -12,7 +12,7 @@ pub fn vector2_to_token(vec: Vector2) -> Token
     Token::Collection(vec![Token::Float(vec.x), Token::Float(vec.y)])
 }
 
-pub fn token_to_vector2(token: Token) -> Vector2
+pub fn token_to_vector2(token: &Token) -> Vector2
 {
     if let Token::Collection(c) = token
     {
